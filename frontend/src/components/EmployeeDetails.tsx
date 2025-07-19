@@ -1,7 +1,8 @@
 import PersonIcon from "@mui/icons-material/Person";
 import { Avatar, Box, Paper, Tab, Tabs, Typography } from "@mui/material";
 import { Employee } from "../models/Employee";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { pageMetadata } from "../../lib/metadata";
 
 const tabPanelValue = {
   basicInfo: "基本情報",
@@ -43,6 +44,14 @@ export function EmployeeDetails(prop: EmployeeDetailsProps) {
     },
     []
   );
+
+  useEffect(() => {
+    const title = pageMetadata.employeeDetailTitleTemplate.replace(
+        "{employeeName}",
+        employee.name
+      );
+    document.title = title;
+  }, [employee.name]);
 
   return (
     <Paper sx={{ p: 2 }}>
