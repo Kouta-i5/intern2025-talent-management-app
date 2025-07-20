@@ -5,7 +5,6 @@ import { GlobalContainer } from "@/components/GlobalContainer";
 import { Button, Box, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import ProjectForm from "../components/ProjectForm";
-https://github.com/Kouta-i5/intern2025-talent-management-app/pull/13/conflict?name=frontend%252Fsrc%252Fcomponents%252FEmployeeListContainer.tsx&ancestor_oid=2ccf0e261e81ffbbb2bd436c4e786bf8b10ab48a&base_oid=bb0fc461852f35560702edbe0ee937a8208edf48&head_oid=fe6dfe0e95f30e35352be73acaf1105cf027c09fimport { Employee } from "../models/Employee";
 import { pageMetadata } from "../../lib/metadata";
 import { Metadata } from "next";
 import AddEmployeeButton from "@/components/AddEmployeeButton";
