@@ -6,7 +6,13 @@ import { Button, Box, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import ProjectForm from "../components/ProjectForm";
 import { Employee } from "../models/Employee";
+import { pageMetadata } from "../../lib/metadata";
+import { Metadata } from "next";
 
+export const metadata: Metadata = {
+  title: pageMetadata.home.title,
+  description: pageMetadata.home.description,
+};
 export default function Home() {
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [selectedEmployees, setSelectedEmployees] = useState<Employee[]>([]);
