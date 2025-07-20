@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 import * as t from "io-ts";
 import { isLeft } from "fp-ts/Either";
@@ -8,6 +8,8 @@ import { Employee, EmployeeT } from "../models/Employee";
 
 export type EmployeesContainerProps = {
   filterText: string;
+  onSelectedEmployeesChange?: (selectedEmployees: Employee[]) => void;
+  onResetSelection?: () => void;
   filterDepartment?: string;
   filterSkill?: string;
   sortKey?: string;
@@ -28,18 +30,20 @@ const employeesFetcher = async (url: string): Promise<Employee[]> => {
   return decoded.right;
 };
 
-export function EmployeeListContainer({ filterText, filterDepartment, filterSkill, sortKey }: EmployeesContainerProps) {
-  const params = new URLSearchParams();
+export function EmployeeListContainer({
+  filterText,
+  onSelectedEmployeesChange,
+  onResetSelection,
+  filterDepartment,
+  filterSkill,
+  sortKey
+}: EmployeesContainerProps) {
+  const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set());
 
-  if (filterText) {
-    params.append('filterText', filterText);
-  }
-  if (filterDepartment) {
-    params.append('filterDepartment', filterDepartment);
-  }
-  if (filterSkill) {
-    params.append('filterSkill', filterSkill);
-  }
+  const params = new URLSearchParams();
+  if (filterText) params.append('filterText', filterText);
+  if (filterDepartment) params.append('filterDepartment', filterDepartment);
+  if (filterSkill) params.append('filterSkill', filterSkill);
 
   const queryString = params.toString();
 
@@ -47,21 +51,43 @@ export function EmployeeListContainer({ filterText, filterDepartment, filterSkil
     `/api/employees?${queryString}`,
     employeesFetcher
   );
+
+  // エラー共通ログ
   useEffect(() => {
     if (error != null) {
-      console.error(`Failed to fetch employees filtered by filterText`, error);
+      console.error('Failed to fetch employees', error);
     }
-  }, [error, filterText]);
+  }, [error, filterText, filterDepartment, filterSkill]);
+
+  // 選択された社員を親へ送信
   useEffect(() => {
-    if (error != null) {
-      console.error(`Failed to fetch employees filtered by filterDepartment`, error);
+    if (data && onSelectedEmployeesChange) {
+      const selected = data.filter(employee => selectedEmployees.has(employee.id));
+      onSelectedEmployeesChange(selected);
     }
-  }, [error, filterDepartment]);
+  }, [data, selectedEmployees, onSelectedEmployeesChange]);
+
+  // チェック状態の更新
+  const handleEmployeeCheck = (employeeId: string, checked: boolean) => {
+    setSelectedEmployees(prev => {
+      const newSet = new Set(prev);
+      checked ? newSet.add(employeeId) : newSet.delete(employeeId);
+      return newSet;
+    });
+  };
+
+  // 選択状態リセット用イベントハンドラ
   useEffect(() => {
-    if (error != null) {
-      console.error(`Failed to fetch employees filtered by filterSkill`, error);
+    if (onResetSelection) {
+      const resetHandler = () => {
+        setSelectedEmployees(new Set());
+      };
+      window.addEventListener('reset-selection', resetHandler);
+      return () => {
+        window.removeEventListener('reset-selection', resetHandler);
+      };
     }
-  }, [error, filterSkill]);
+  }, [onResetSelection]);
   if (data != null) {
     if (sortKey) {
       const [key, order] = sortKey.split('_');
@@ -78,7 +104,12 @@ export function EmployeeListContainer({ filterText, filterDepartment, filterSkil
       });
     }
     return data.map((employee) => (
-      <EmployeeListItem employee={employee} key={employee.id} />
+      <EmployeeListItem 
+        employee={employee} 
+        key={employee.id}
+        checked={selectedEmployees.has(employee.id)}
+        onCheckChange={handleEmployeeCheck}
+      />
     ));
   }
   if (isLoading) {

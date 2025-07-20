@@ -2,16 +2,22 @@
 import { Paper, TextField, Select, MenuItem, Box, FormControl, InputLabel } from "@mui/material";
 import { useState } from "react";
 import { EmployeeListContainer } from "./EmployeeListContainer";
+
+import { Employee } from "../models/Employee";
 import { DepartmentT, SkillT } from "../models/Employee";
 
-export function SearchEmployees() {
+export type SearchEmployeesProps = {
+  onSelectedEmployeesChange?: (selectedEmployees: Employee[]) => void;
+  onResetSelection?: () => void;
+};
+
+export function SearchEmployees({ onSelectedEmployeesChange, onResetSelection }: SearchEmployeesProps) {
   const [searchKeyword, setSearchKeyword] = useState("");
   const [searchDepartment, setSearchDepartment] = useState("");
   const [searchSkill, setSearchSkill] = useState("");
   const [sortKey, setSortKey] = useState("name_asc");
   const departmentLabels = DepartmentT.types.map(codec => codec.value);
   const skillLabels = SkillT.types.map(codec => codec.value);
-
   return (
     <Paper
       sx={{
@@ -81,6 +87,8 @@ export function SearchEmployees() {
       <EmployeeListContainer
         key="employeesContainer"
         filterText={searchKeyword}
+        onSelectedEmployeesChange={onSelectedEmployeesChange}
+        onResetSelection={onResetSelection}
         filterDepartment={searchDepartment}
         filterSkill={searchSkill}
         sortKey={sortKey}

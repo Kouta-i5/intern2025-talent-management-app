@@ -2,15 +2,21 @@ import PersonIcon from "@mui/icons-material/Person";
 import { Avatar, Box, Card, CardContent, Typography, Chip, Checkbox } from "@mui/material";
 import { Employee } from "../models/Employee";
 import Link from "next/link";
-import { useState } from "react";
 
 export type EmployeeListItemProps = {
   employee: Employee;
+  checked?: boolean;
+  onCheckChange?: (employeeId: string, checked: boolean) => void;
 };
 
 export function EmployeeListItem(prop: EmployeeListItemProps) {
-  const [checked, setChecked] = useState(false);
-  const employee = prop.employee;
+  const { employee, checked = false, onCheckChange } = prop;
+
+  const handleCheckChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (onCheckChange) {
+      onCheckChange(employee.id, event.target.checked);
+    }
+  };
 
   return (
     <Card
@@ -73,7 +79,7 @@ export function EmployeeListItem(prop: EmployeeListItemProps) {
           {/* 右：チェックボックス */}
           <Checkbox
             checked={checked}
-            onChange={() => setChecked(!checked)}
+            onChange={handleCheckChange}
             color="primary"
           />
         </Box>
