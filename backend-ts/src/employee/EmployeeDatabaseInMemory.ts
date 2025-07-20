@@ -137,4 +137,8 @@ export class EmployeeDatabaseInMemory implements EmployeeDatabase {
         }
         return employees;
     }
+
+    async addEmployee(employee: Employee): Promise<void> {
+        this.employees.set(employee.id, employee);
+    }
 }
