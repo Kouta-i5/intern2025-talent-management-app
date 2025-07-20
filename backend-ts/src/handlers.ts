@@ -3,6 +3,9 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { Employee } from './employee/Employee';
 import { EmployeeDatabaseDynamoDB } from './employee/EmployeeDatabaseDynamoDB';
 import { EmployeeDatabase } from './employee/EmployeeDatabase';
+import { v4 as uuidv4 } from 'uuid';
+import { EmployeeT } from './employee/Employee';
+import { isLeft } from 'fp-ts/Either';
 
 const getEmployeeHandler = async (database: EmployeeDatabase, id: string): Promise<LambdaFunctionURLResult> => {
     const employee: Employee | undefined = await database.getEmployee(id);
@@ -16,12 +19,38 @@ const getEmployeeHandler = async (database: EmployeeDatabase, id: string): Promi
     };
 };
 
-const getEmployeesHandler = async (database: EmployeeDatabase, filterText: string): Promise<LambdaFunctionURLResult> => {
-    const employees: Employee[] = await database.getEmployees(filterText);
+const getEmployeesHandler = async (database: EmployeeDatabase, filterText: string, filterDepartment: string, filterSkill: string): Promise<LambdaFunctionURLResult> => {
+    const employees: Employee[] = await database.getEmployees(filterText, filterDepartment, filterSkill);
     return {
         statusCode: 200,
         body: JSON.stringify(employees),
     };
+};
+
+const postEmployeeHandler = async (database: EmployeeDatabase, body: string): Promise<LambdaFunctionURLResult> => {
+    try {
+        const parsed = JSON.parse(body);
+        parsed.id = uuidv4();
+
+        const decoded = EmployeeT.decode(parsed);
+        if (isLeft(decoded)) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ message: "Invalid employee data" }),
+            };
+        }
+
+        await database.addEmployee(decoded.right);
+        return {
+            statusCode: 201,
+            body: JSON.stringify({ id: decoded.right.id }),
+        };
+    } catch (e) {
+        return {
+            statusCode: 400,
+            body: JSON.stringify({ message: "Invalid JSON format" }),
+        };
+    }
 };
 
 export const handle = async (event: LambdaFunctionURLEvent): Promise<LambdaFunctionURLResult> => {
@@ -37,7 +66,11 @@ export const handle = async (event: LambdaFunctionURLEvent): Promise<LambdaFunct
         const path = normalizePath(event.requestContext.http.path);
         const query = event.queryStringParameters;
         if (path === "/api/employees") {
-            return getEmployeesHandler(database, query?.filterText ?? "");
+            const filterText = query?.filterText ?? "";
+            const filterDepartment = query?.filterDepartment ?? "";
+            const filterSkill = query?.filterSkill ?? "";
+
+            return getEmployeesHandler(database, filterText, filterDepartment, filterSkill);
         } else if (path.startsWith("/api/employees/")) {
             const id = path.substring("/api/employees/".length);
             return getEmployeeHandler(database, id);

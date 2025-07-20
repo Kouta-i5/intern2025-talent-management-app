@@ -1,4 +1,4 @@
-import { DynamoDBClient, GetItemCommand, GetItemCommandInput, ScanCommand, ScanCommandInput } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, GetItemCommand, GetItemCommandInput, ScanCommand, ScanCommandInput, PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { isLeft } from "fp-ts/Either";
 import { EmployeeDatabase } from "./EmployeeDatabase";
 import { Employee, EmployeeT } from "./Employee";
@@ -63,6 +63,24 @@ export class EmployeeDatabaseDynamoDB implements EmployeeDatabase {
                     return [decoded.right];
                 }
             });
+    }
+
+    async addEmployee(employee: Employee): Promise<void> {
+        const input = {
+            TableName: this.tableName,
+            Item: {
+                id: { S: employee.id },
+                name: { S: employee.name },
+                age: { N: employee.age.toString() },
+                gender: { S: employee.gender },
+                department: { S: employee.department },
+                skills: { SS: employee.skills },
+                qualifications: { SS: employee.qualifications },
+                hireYear: { N: employee.hireYear.toString() },
+                aspirations: { SS: employee.aspirations },
+            },
+        };
+        await this.client.send(new PutItemCommand(input));
     }
 }
 

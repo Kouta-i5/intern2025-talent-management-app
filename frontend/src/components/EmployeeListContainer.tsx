@@ -10,6 +10,9 @@ export type EmployeesContainerProps = {
   filterText: string;
   onSelectedEmployeesChange?: (selectedEmployees: Employee[]) => void;
   onResetSelection?: () => void;
+  filterDepartment?: string;
+  filterSkill?: string;
+  sortKey?: string;
 };
 
 const EmployeesT = t.array(EmployeeT);
@@ -27,22 +30,37 @@ const employeesFetcher = async (url: string): Promise<Employee[]> => {
   return decoded.right;
 };
 
-export function EmployeeListContainer({ filterText, onSelectedEmployeesChange, onResetSelection }: EmployeesContainerProps) {
+export function EmployeeListContainer({
+  filterText,
+  onSelectedEmployeesChange,
+  onResetSelection,
+  filterDepartment,
+  filterSkill,
+  sortKey
+}: EmployeesContainerProps) {
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set());
-  
-  const encodedFilterText = encodeURIComponent(filterText);
+
+  const params = new URLSearchParams();
+  if (filterText) params.append('filterText', filterText);
+  if (filterDepartment) params.append('filterDepartment', filterDepartment);
+  if (filterSkill) params.append('filterSkill', filterSkill);
+  if (sortKey) params.append('sortKey', sortKey);
+
+  const queryString = params.toString();
+
   const { data, error, isLoading } = useSWR<Employee[], Error>(
-    `/api/employees?filterText=${encodedFilterText}`,
+    `/api/employees?${queryString}`,
     employeesFetcher
   );
 
+  // エラー共通ログ
   useEffect(() => {
     if (error != null) {
-      console.error(`Failed to fetch employees filtered by filterText`, error);
+      console.error('Failed to fetch employees', error);
     }
-  }, [error, filterText]);
+  }, [error, filterText, filterDepartment, filterSkill]);
 
-  // 選択された社員の情報を親コンポーネントに送信
+  // 選択された社員を親へ送信
   useEffect(() => {
     if (data && onSelectedEmployeesChange) {
       const selected = data.filter(employee => selectedEmployees.has(employee.id));
@@ -50,33 +68,42 @@ export function EmployeeListContainer({ filterText, onSelectedEmployeesChange, o
     }
   }, [data, selectedEmployees, onSelectedEmployeesChange]);
 
+  // チェック状態の更新
   const handleEmployeeCheck = (employeeId: string, checked: boolean) => {
     setSelectedEmployees(prev => {
       const newSet = new Set(prev);
-      if (checked) {
-        newSet.add(employeeId);
-      } else {
-        newSet.delete(employeeId);
-      }
+      checked ? newSet.add(employeeId) : newSet.delete(employeeId);
       return newSet;
     });
   };
 
-  // 外部からリセットされた場合の処理
+  // 選択状態リセット用イベントハンドラ
   useEffect(() => {
     if (onResetSelection) {
       const resetHandler = () => {
         setSelectedEmployees(new Set());
       };
-      // グローバルイベントリスナーとして登録（簡易実装）
       window.addEventListener('reset-selection', resetHandler);
       return () => {
         window.removeEventListener('reset-selection', resetHandler);
       };
     }
   }, [onResetSelection]);
-
   if (data != null) {
+    if (sortKey) {
+      const [key, order] = sortKey.split('_');
+      data.sort((a, b) => {
+        if (key === 'name') {
+          return order === 'asc' ? a.name.localeCompare(b.name, 'ja') : b.name.localeCompare(a.name, 'ja');
+        } else if (key === 'age') {
+          return order === 'asc' ? a.age - b.age : b.age - a.age;
+        } else if (key === 'hireYear') {
+          return order === 'asc' ? b.hireYear - a.hireYear : a.hireYear - b.hireYear;
+          // 入社年数が昇順の場合、入社年は降順
+        }
+        return 0;
+      });
+    }
     return data.map((employee) => (
       <EmployeeListItem 
         employee={employee} 

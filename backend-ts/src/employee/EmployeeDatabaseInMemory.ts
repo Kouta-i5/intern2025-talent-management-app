@@ -1,5 +1,6 @@
 import { EmployeeDatabase } from "./EmployeeDatabase";
-import { Employee } from "./Employee";
+import { Employee, SkillT } from "./Employee";
+import * as t from 'io-ts';
 
 export class EmployeeDatabaseInMemory implements EmployeeDatabase {
     private employees: Map<string, Employee>
@@ -122,11 +123,22 @@ export class EmployeeDatabaseInMemory implements EmployeeDatabase {
         return this.employees.get(id);
     }
 
-    async getEmployees(filterText: string): Promise<Employee[]> {
-        const employees = Array.from(this.employees.values());
-        if (filterText === "") {
-            return employees;
+    async getEmployees(filterText: string, filterDepartment: string, filterSkill: string): Promise<Employee[]> {
+        let employees = Array.from(this.employees.values());
+
+        if (filterText !== "") {
+            employees = employees.filter(employee => employee.name.toLowerCase().includes(filterText));
         }
-        return employees.filter(employee => employee.name.toLowerCase().includes(filterText));
+        if (filterDepartment !== "") {
+            employees = employees.filter(employee => employee.department === filterDepartment);
+        }
+        if (filterSkill !== "") {
+            employees = employees.filter(employee => employee.skills.includes(filterSkill as t.TypeOf<typeof SkillT>));
+        }
+        return employees;
+    }
+
+    async addEmployee(employee: Employee): Promise<void> {
+        this.employees.set(employee.id, employee);
     }
 }
