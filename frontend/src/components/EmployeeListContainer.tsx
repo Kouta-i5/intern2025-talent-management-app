@@ -10,6 +10,7 @@ export type EmployeesContainerProps = {
   filterText: string;
   filterDepartment?: string;
   filterSkill?: string;
+  sortKey?: string;
 };
 
 const EmployeesT = t.array(EmployeeT);
@@ -27,7 +28,7 @@ const employeesFetcher = async (url: string): Promise<Employee[]> => {
   return decoded.right;
 };
 
-export function EmployeeListContainer({ filterText, filterDepartment, filterSkill }: EmployeesContainerProps) {
+export function EmployeeListContainer({ filterText, filterDepartment, filterSkill, sortKey }: EmployeesContainerProps) {
   const params = new URLSearchParams();
 
   if (filterText) {
@@ -62,6 +63,20 @@ export function EmployeeListContainer({ filterText, filterDepartment, filterSkil
     }
   }, [error, filterSkill]);
   if (data != null) {
+    if (sortKey) {
+      const [key, order] = sortKey.split('_');
+      data.sort((a, b) => {
+        if (key === 'name') {
+          return order === 'asc' ? a.name.localeCompare(b.name, 'ja') : b.name.localeCompare(a.name, 'ja');
+        } else if (key === 'age') {
+          return order === 'asc' ? a.age - b.age : b.age - a.age;
+        } else if (key === 'hireYear') {
+          return order === 'asc' ? b.hireYear - a.hireYear : a.hireYear - b.hireYear;
+          // 入社年数が昇順の場合、入社年は降順
+        }
+        return 0;
+      });
+    }
     return data.map((employee) => (
       <EmployeeListItem employee={employee} key={employee.id} />
     ));
