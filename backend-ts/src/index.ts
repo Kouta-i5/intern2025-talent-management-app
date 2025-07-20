@@ -10,6 +10,8 @@ const database = new EmployeeDatabaseInMemory();
 
 app.get("/api/employees", async (req: Request, res: Response) => {
     const filterText = req.query.filterText ?? "";
+    const filterDepartment = req.query.filterDepartment ?? "";
+    const filterSkill = req.query.filterSkill ?? "";
     // req.query is parsed by the qs module.
     // https://www.npmjs.com/package/qs
     if (Array.isArray(filterText)) {
@@ -22,8 +24,24 @@ app.get("/api/employees", async (req: Request, res: Response) => {
         res.status(400).send();
         return;
     }
+    if (Array.isArray(filterDepartment)) {
+        res.status(400).send();
+        return;
+    }
+    if (typeof filterDepartment !== "string") {
+        res.status(400).send();
+        return;
+    }
+    if (Array.isArray(filterSkill)) {
+        res.status(400).send();
+        return;
+    }
+    if (typeof filterSkill !== "string") {
+        res.status(400).send();
+        return;
+    }
     try {
-        const employees = await database.getEmployees(filterText);
+        const employees = await database.getEmployees(filterText, filterDepartment, filterSkill);
         res.status(200).send(JSON.stringify(employees));
     } catch (e) {
         console.error(`Failed to load the users filtered by ${filterText}.`, e);

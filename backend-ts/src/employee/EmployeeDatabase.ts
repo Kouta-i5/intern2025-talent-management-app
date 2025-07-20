@@ -2,6 +2,6 @@ import { Employee } from "./Employee";
 
 export interface EmployeeDatabase {
     getEmployee(id: string): Promise<Employee | undefined>
-    getEmployees(filterText: string): Promise<Employee[]>
     addEmployee(employee: Employee): Promise<void>;
+    getEmployees(filterText: string, filterDepartment: string, filterSkill: string): Promise<Employee[]>
 }

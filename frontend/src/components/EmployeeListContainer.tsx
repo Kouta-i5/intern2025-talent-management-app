@@ -8,6 +8,8 @@ import { Employee, EmployeeT } from "../models/Employee";
 
 export type EmployeesContainerProps = {
   filterText: string;
+  filterDepartment?: string;
+  filterSkill?: string;
 };
 
 const EmployeesT = t.array(EmployeeT);
@@ -25,10 +27,23 @@ const employeesFetcher = async (url: string): Promise<Employee[]> => {
   return decoded.right;
 };
 
-export function EmployeeListContainer({ filterText }: EmployeesContainerProps) {
-  const encodedFilterText = encodeURIComponent(filterText);
+export function EmployeeListContainer({ filterText, filterDepartment, filterSkill }: EmployeesContainerProps) {
+  const params = new URLSearchParams();
+
+  if (filterText) {
+    params.append('filterText', filterText);
+  }
+  if (filterDepartment) {
+    params.append('filterDepartment', filterDepartment);
+  }
+  if (filterSkill) {
+    params.append('filterSkill', filterSkill);
+  }
+
+  const queryString = params.toString();
+
   const { data, error, isLoading } = useSWR<Employee[], Error>(
-    `/api/employees?filterText=${encodedFilterText}`,
+    `/api/employees?${queryString}`,
     employeesFetcher
   );
   useEffect(() => {
@@ -36,6 +51,16 @@ export function EmployeeListContainer({ filterText }: EmployeesContainerProps) {
       console.error(`Failed to fetch employees filtered by filterText`, error);
     }
   }, [error, filterText]);
+  useEffect(() => {
+    if (error != null) {
+      console.error(`Failed to fetch employees filtered by filterDepartment`, error);
+    }
+  }, [error, filterDepartment]);
+  useEffect(() => {
+    if (error != null) {
+      console.error(`Failed to fetch employees filtered by filterSkill`, error);
+    }
+  }, [error, filterSkill]);
   if (data != null) {
     return data.map((employee) => (
       <EmployeeListItem employee={employee} key={employee.id} />
