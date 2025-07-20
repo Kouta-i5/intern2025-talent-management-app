@@ -44,7 +44,6 @@ export function EmployeeListContainer({
   if (filterText) params.append('filterText', filterText);
   if (filterDepartment) params.append('filterDepartment', filterDepartment);
   if (filterSkill) params.append('filterSkill', filterSkill);
-  if (sortKey) params.append('sortKey', sortKey);
 
   const queryString = params.toString();
 
