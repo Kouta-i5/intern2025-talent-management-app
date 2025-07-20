@@ -3,11 +3,9 @@ on:
   push:
     branches:
       - main
-      - feat/taniguchi-CI
   pull_request:
     branches:
       - main
-      - feat/taniguchi-CI
     
 jobs:
   frontend-test:
