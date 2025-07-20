@@ -2,9 +2,16 @@
 import { Paper, TextField } from "@mui/material";
 import { useState } from "react";
 import { EmployeeListContainer } from "./EmployeeListContainer";
+import { Employee } from "../models/Employee";
 
-export function SearchEmployees() {
+export type SearchEmployeesProps = {
+  onSelectedEmployeesChange?: (selectedEmployees: Employee[]) => void;
+  onResetSelection?: () => void;
+};
+
+export function SearchEmployees({ onSelectedEmployeesChange, onResetSelection }: SearchEmployeesProps) {
   const [searchKeyword, setSearchKeyword] = useState("");
+  
   return (
     <Paper
       sx={{
@@ -23,6 +30,8 @@ export function SearchEmployees() {
       <EmployeeListContainer
         key="employeesContainer"
         filterText={searchKeyword}
+        onSelectedEmployeesChange={onSelectedEmployeesChange}
+        onResetSelection={onResetSelection}
       />
     </Paper>
   );
