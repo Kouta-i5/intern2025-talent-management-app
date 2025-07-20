@@ -1,5 +1,8 @@
 import express, { Request, Response } from "express";
 import { EmployeeDatabaseInMemory } from './employee/EmployeeDatabaseInMemory';
+import { v4 as uuidv4 } from 'uuid';
+import { EmployeeT } from './employee/Employee';
+import { isLeft } from 'fp-ts/Either';
 
 const app = express();
 const port = process.env.PORT ?? 8080;
@@ -40,6 +43,25 @@ app.get("/api/employees/:userId", async (req: Request, res: Response) => {
     } catch (e) {
         console.error(`Failed to load the user ${userId}.`, e);
         res.status(500).send();
+    }
+});
+
+app.post("/api/employees", async (req: Request, res: Response) => {
+    const parsed = req.body;
+    parsed.id = uuidv4();
+
+    const decoded = EmployeeT.decode(parsed);
+    if (isLeft(decoded)) {
+        res.status(400).json({ message: "Invalid employee data" });
+        return;
+    }
+
+    try {
+        await database.addEmployee(decoded.right);
+        res.status(201).json({ id: decoded.right.id });
+    } catch (e) {
+        console.error("Failed to add employee", e);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 });
 
